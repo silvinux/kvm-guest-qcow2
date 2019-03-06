@@ -1,0 +1,67 @@
+---
+- hosts: local
+  gather_facts: yes
+  connection: local
+  become: yes
+  become_method: sudo
+  environment:
+    LIBGUESTFS_BACKEND: direct
+  roles:
+    - role: kvm
+      ### Variables
+      ## Paths
+      vm_location: "/var/lib/libvirt/images"
+      image: "/share/Programs/OS_iso/RedHat/qcow2/rhel-server-7.6-x86_64-kvm.qcow2"
+      path_output: "/var/log/cloud-init.log"
+      ## Image 
+      new_image_size: "10G"
+      ## Owner
+      dir_owner: silvinux 
+      dir_group: silvinux 
+      ## Storage
+      env_LIBGUESTFS_BACKEND: "direct"
+      preallocation: metadata
+      ## ssh keys
+      ssh_keys:
+          - sshkey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICoT3oooouuuuVOFktOj+rGFhqlxdr0bNH+ln7cDLJtH silvio@silvinux.example.com
+      ## Users
+      users_dic:
+        - name: silvinux
+          groups: users,wheel
+          shell: /bin/bash
+          sudo: ALL=(ALL) NOPASSWD:ALL
+      chg_pwd_users:
+        - name: root
+          password: toor
+      ## Timezone
+      timezone: "Europe/Madrid"
+      ## VM definition
+      guests:
+        test:
+          fqdn: test.example.com
+          mem: 512
+          cpus: 1
+          os_type: rhel7
+          file_type: qcow2
+          network: "bridge=virbr0"
+          model: virtio
+          graphics: spice
+          address: 192.168.122.12
+          network: 192.168.122.0
+          netmask: 255.255.255.0
+          broadcast: 192.168.122.255
+          gateway: 192.168.122.1
+        test1:
+          fqdn: test1.example.com
+          mem: 512
+          cpus: 1
+          os_type: rhel7
+          file_type: qcow2
+          network: "bridge=virbr0"
+          model: virtio
+          graphics: spice
+          address: 192.168.122.13
+          network: 192.168.122.0
+          netmask: 255.255.255.0
+          broadcast: 192.168.122.255
+          gateway: 192.168.122.1
