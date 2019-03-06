@@ -1,0 +1,52 @@
+#cloud-config
+# Ansible cloud-config basic template
+# https://cloudinit.readthedocs.io/en/latest/topics/examples.html
+ 
+# Hostname management
+preserve_hostname: {{ preserve_hostname }}
+ 
+# Setup Users 
+users:
+{% for user in users_dic %}
+  - name: {{ user.name }}
+    groups: {{ user.groups }}
+    shell: {{ user.shell }}
+    sudo: {{ user.sudo }}
+{% endfor %}
+
+chpasswd:
+  list: |
+{% for chpassword in chg_pwd_users %}
+    {{ chpassword.name }}:{{ chpassword.password }}
+{% endfor%}
+expire: False
+
+# Setup SSH
+ssh_pwauth: True
+disable_root: false 
+ 
+# set timezone for VM
+timezone: {{ timezone}}
+
+# Remove cloud-init 
+runcmd:
+{% for cmd in runcmd %}
+  - {{ cmd}}
+{% endfor %}
+  ##Network
+
+# Install additional packages on first boot
+packages:
+{% for pkg in packages %}
+  - {{ pkg }}
+{% endfor %}
+
+# Configure where output will go
+output:
+  all: ">> {{ path_output }}"
+
+# final_message
+# default: cloud-init boot finished at $TIMESTAMP. Up $UPTIME seconds
+# this message is written by cloud-final when the system is finished
+# its first boot
+final_message: "{{ final_message }}"

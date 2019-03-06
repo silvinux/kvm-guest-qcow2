@@ -1,0 +1,68 @@
+---
+vm_location: "/var/lib/libvirt/images"
+path_output: "/var/log/cloud-init.log"
+image: "/home/silvinux/kvm/rhel-server-7.6-x86_64-kvm.qcow2"
+new_image_size: "40G"
+
+dir_owner: silvinux
+dir_group: silvinux
+
+env_LIBGUESTFS_BACKEND: "direct"
+preallocation: metadata
+
+preserve_hostname: False
+
+users_dic:
+  - name: student
+    groups: users,wheel
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+chg_pwd_users:
+  - name: root
+    password: toor
+  - name: student
+    password: redhat
+
+timezone: "Europe/Madrid"
+
+runcmd:
+  - systemctl stop network && systemctl start network
+  - /usr/bin/localectl set-keymap es
+  - sed -i s/ONBOOT=no/ONBOOT=yes/g /etc/sysconfig/network-scripts/ifcfg-eth0
+  - systemctl stop network && systemctl start network
+  - yum -y remove cloud-init
+
+packages:
+ - vim
+ - vim-enhanced
+ - nmap
+ - net-tools
+ - bind-utils
+
+final_message: "The system is finally up, after $UPTIME seconds"
+
+#guests:
+#  client-rhel7:
+#    fqdn: client-rhel7.example.com
+#    mem: 512
+#    cpus: 1
+#    os_type: rhel7
+#    file_type: qcow2
+#    network: "bridge=virbr0"
+#    model: virtio
+#    graphics: spice
+#    address: 192.168.122.10
+#    network: 192.168.122.0
+#    netmask: 255.255.255.0
+#    broadcast: 192.168.122.255
+#    gateway: 192.168.122.1
+#  test2:
+#    fqdn: test2.example.com
+#    mem: 512
+#    cpus: 1
+#    os_type: rhel7
+#    file_type: qcow2
+#    network: "bridge=virbr0"
+#    model: virtio
+#    graphics: spice

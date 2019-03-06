@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: silvinux
+  role_name: kvm-guest-qcow2A
+  description: KVM guest creation
+  company: N/A
+  license: GPLv3
+  min_ansible_version: 2.7.7
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  galaxy_tags:
+    - kvm
+    - libguestfs tools
+    - virt install
+    - virt resize
+    - qcow2
+    - qemu image
+    - mkisofs
+dependencies: []

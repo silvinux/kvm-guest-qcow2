@@ -1,0 +1,157 @@
+---
+- name: "Create VM directory"
+  file:
+    path: '{{ vm_location }}/{{ item.key }}'
+    state: "directory"
+    owner: '{{ dir_owner }}'
+    group: '{{ dir_group }}'
+    mode: 0775
+  with_dict: "{{ guests }}"
+
+- name: "Generate template  for meta-data"
+  copy:
+    dest: '{{ vm_location }}//{{ item.key }}/meta-data'
+    mode: 0777
+    content: |
+             instance-id: '{{ item.key }}'
+             local-hostname: '{{ item.key }}'
+             network-interfaces: |
+               iface eth0 inet static
+               address {{ item.value.address }} 
+               network {{ item.value.network }}
+               netmask {{ item.value.netmask }}
+               broadcast {{ item.value.broadcast }}
+               gateway {{ item.value.gateway }}
+  with_dict: "{{ guests }}"
+
+- name: "Generate template  for user-data"
+  template:
+    src: "user-data.j2"
+    dest: '{{ vm_location }}//{{ item.key }}/user-data'
+    mode: 0777
+  with_dict: "{{ guests }}"
+
+- name: "Insert hostname to user-data before preserve_hostname"
+  lineinfile: 
+    dest: '{{ vm_location }}//{{ item.key }}/user-data'
+    insertafter: "^preserve_hostname"
+    line: "hostname: '{{ item.key }}'"
+    state: present
+  with_dict: "{{ guests }}"
+
+#- name: "Check if image copy was made "
+#  stat:
+#    path: '{{ vm_location }}/{{ item.key }}/{{ item.key }}.qcow2'
+#  with_dict: "{{ guests }}"
+#  register: is_image_copied
+  
+- name: "Copy source image to new image VM"
+  copy: 
+    src: '{{ image }}' 
+    dest: '{{ vm_location }}/{{ item.key }}/{{ item.key }}.qcow2' 
+  with_dict: "{{ guests }}"
+  #when: is_image_copied.stat.exists == false
+
+#- name: "Check if new image is already created"
+#  stat:
+#    path: '{{ vm_location }}/{{ item.key }}/{{ item.key }}.new.image'
+#  register: is_new_image_created
+#  ignore_errors: true
+#  with_dict: "{{ guests }}"
+
+- name: "Create target image (New VM)"
+  command: >
+          qemu-img create -f qcow2 -o preallocation={{ preallocation }} '{{ vm_location }}/{{ item.key }}/{{ item.key }}'.new.image '{{ new_image_size }}'
+  #when: is_new_image_created.stat.exists == false
+  environment:
+    LIBGUESTFS_BACKEND: '{{ env_LIBGUESTFS_BACKEND }}'
+  with_dict: "{{ guests }}"
+
+#- name: "Check if new image is already resized"
+#  shell: >
+#           virt-filesystems --long --parts --blkdevs -h -a {{ vm_location }}/{{ item.key }}/{{ item.key }}.new.image|awk '/sda1/{ print $4}'
+#  register: is_new_image_resized
+#  ignore_errors: true
+#  with_dict: "{{ guests }}"
+
+#- debug:
+#    var: is_new_image_resized
+#    verbosity: 2
+
+- name: "Resize new image"
+  command: >
+           virt-resize --expand /dev/sda1 '{{ vm_location }}/{{ item.key }}/{{ item.key }}.qcow2' '{{ vm_location }}/{{ item.key }}/{{ item.key }}'.new.image
+  with_dict: "{{ guests }}"
+#  when: is_new_image_resized.stdout != '{{ new_image_size }}'
+    
+#- name: "Check if new image is already renamed"
+#  stat:
+#    path: '{{ vm_location }}/{{ hostname }}/{{ hostname }}.new.image'
+#  register: is_new_image_renamed
+    
+- name: "Renamed resized image"
+  command: mv -fv '{{ vm_location }}/{{ item.key }}/{{ item.key }}'.new.image '{{ vm_location }}/{{ item.key }}/{{ item.key }}.qcow2'
+#  when: is_new_image_renamed.stat.exists == true
+  with_dict: "{{ guests }}"
+     
+#- name: "Check if cidata iso is created"
+#  stat:
+#    path: '{{ vm_location }}/{{ hostname }}/{{ hostname }}.qcow2-cidata.iso'
+#  register: is_cidata_created
+      
+- name: "Creating a cloud-init ISO"
+  command: >
+           mkisofs -o '{{ vm_location }}/{{ item.key }}/{{ item.key }}.qcow2'-cidata.iso -V cidata -J -r user-data meta-data 
+  args:
+    chdir: '{{ vm_location }}/{{ item.key }}/'
+  with_dict: "{{ guests }}"
+#  when: is_cidata_created.stat.exists == false  
+
+#- name: "Check if storage pool is created"
+#  shell: >
+#         virsh pool-list| egrep -c '{{ hostname }}'
+#  register: is_storage_pool_created
+#  failed_when: is_storage_pool_created.rc != 1 and is_storage_pool_created.rc != 0
+
+#- debug:
+#    var: is_storage_pool_created
+#    verbosity: 2
+
+- name: "Create kvm storage pool"
+  command: >
+           virsh pool-create-as --name '{{ item.key }}' --type dir --target '{{ vm_location }}/{{ item.key }}/'
+  #when: is_storage_pool_created.stdout == "0"
+  ignore_errors: true
+  with_dict: "{{ guests }}"
+
+- name: "Change root pwd"
+  command: >
+           virt-customize -a '{{ vm_location }}/{{ item.key }}/{{ item.key }}.qcow2' --root-password password:toor
+  ignore_errors: true
+  with_dict: "{{ guests }}"
+
+- name: get list of VMs
+  virt:
+    command: "list_vms"
+  register: vms
+
+- name: create vm
+  command: >
+            virt-install --import --name {{ item.key }}
+            --memory {{ item.value.mem }} --vcpus {{ item.value.cpus }}
+            --disk {{ vm_location }}/{{ item.key }}/{{ item.key }}.{{ item.value.file_type }},bus=virtio,format=qcow2
+            --disk {{ vm_location }}/{{ item.key }}/{{ item.key }}.qcow2-cidata.iso,device=cdrom
+            --network bridge=virbr0,model=virtio
+            --graphics spice
+            --noautoconsole --os-variant {{ item.value.os_type }}
+  args:
+    chdir: '{{ vm_location }}/{{ item.key }}/'
+  when: item.key not in vms.list_vms
+  with_dict: "{{ guests }}"
+
+
+- name: start vm
+  virt:
+    name: "{{ item.key }}"
+    state: running
+  with_dict: "{{ guests }}"
