@@ -10,20 +10,14 @@ This role is tested on Ansible 2.7.7, and platform requirements are listed in th
 
 Role Variables
 --------------
-### Variable Example
-      ## Paths
       vm_location: "/var/lib/libvirt/images"
       image: "/home/silvinux/kvm/rhel-server-7.6-x86_64-kvm.qcow2"
       path_output: "/var/log/cloud-init.log"
-      ## Image 
       new_image_size: "40G"
-      ## Owner
       dir_owner: silvinux
       dir_group: silvinux
-      ## Storage
       env_LIBGUESTFS_BACKEND: "direct"
       preallocation: metadata
-      ## Users
       users_dic:
         - name: student
           groups: users,wheel
@@ -34,9 +28,7 @@ Role Variables
           password: toor
         - name: student
           password: redhat
-      ## Timezone
       timezone: "Europe/Madrid"
-      ## VM definition
       guests:
         test:
           fqdn: test.example.com
