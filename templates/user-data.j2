@@ -32,12 +32,11 @@ disable_root: false
 # set timezone for VM
 timezone: {{ timezone}}
 
-# Remove cloud-init 
+# Apply commands
 runcmd:
 {% for cmd in runcmd %}
   - {{ cmd}}
 {% endfor %}
-  ##Network
 
 # Install additional packages on first boot
 packages:
@@ -54,3 +53,6 @@ output:
 # this message is written by cloud-final when the system is finished
 # its first boot
 final_message: "{{ final_message }}"
+
+# Add IP/DNS to /etc/hosts file
+bootcmd:

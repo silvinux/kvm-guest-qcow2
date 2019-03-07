@@ -39,6 +39,14 @@
     state: present
   with_dict: "{{ guests }}"
 
+- name: "Populate /etc/hosts file with its own data"
+  lineinfile:
+    dest: '{{ vm_location }}//{{ item.key }}/user-data'
+    insertafter: "^bootcmd:"
+    line: "  - echo {{ item.value.address }}    {{ item.value.fqdn }}   {{ item.key }} >> /etc/hosts"
+    state: present
+  with_dict: "{{ guests }}"
+
 #- name: "Check if image copy was made "
 #  stat:
 #    path: '{{ vm_location }}/{{ item.key }}/{{ item.key }}.qcow2'
