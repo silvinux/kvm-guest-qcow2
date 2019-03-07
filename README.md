@@ -10,6 +10,7 @@ This role is tested on Ansible 2.7.7, and platform requirements are listed in th
 
 Role Variables
 --------------
+```
       vm_location: "/var/lib/libvirt/images"
       image: "/home/silvinux/kvm/rhel-server-7.6-x86_64-kvm.qcow2"
       path_output: "/var/log/cloud-init.log"
@@ -46,7 +47,7 @@ Role Variables
           netmask: 255.255.255.0
           broadcast: 192.168.122.255
           gateway: 192.168.122.1
-
+```
 
 Dependencies
 ------------
@@ -54,6 +55,7 @@ N/A
 
 Example Playbook
 ----------------
+```
    - hosts: local
      gather_facts: yes
      connection: local
@@ -71,6 +73,8 @@ Example Playbook
          dir_group: silvinux 
          env_LIBGUESTFS_BACKEND: "direct"
          preallocation: metadata
+         ssh_keys:
+           - sshkey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICoT3oooouuuuVOFktOj+rGFhqlxdr0bNH+ln7cDLJtH silvio@silvinux.example.com
          users_dic:
            - name: student
              groups: users,wheel
@@ -97,8 +101,7 @@ Example Playbook
              netmask: 255.255.255.0
              broadcast: 192.168.122.255
              gateway: 192.168.122.1
-
-
+```
 License
 -------
 
