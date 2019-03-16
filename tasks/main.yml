@@ -47,6 +47,17 @@
     state: present
   with_dict: "{{ guests }}"
 
+- name: "Populate inventory file with NEW VMs"
+  lineinfile:
+    dest: '{{ inventory_file }}'
+    insertafter: "^[rhn]"
+    line: "{{ item.key }}       ansible_ssh_host={{ item.value.address }} ansible_connection=ssh ansible_ssh_user={{ useransible }}"
+    state: present
+  with_dict: "{{ guests }}"
+
+- name: Refresh inventory to ensure new instaces exist in inventory
+  meta: refresh_inventory
+
 #- name: "Check if image copy was made "
 #  stat:
 #    path: '{{ vm_location }}/{{ item.key }}/{{ item.key }}.qcow2'
@@ -149,17 +160,31 @@
             --memory {{ item.value.mem }} --vcpus {{ item.value.cpus }}
             --disk {{ vm_location }}/{{ item.key }}/{{ item.key }}.{{ item.value.file_type }},bus=virtio,format=qcow2
             --disk {{ vm_location }}/{{ item.key }}/{{ item.key }}.qcow2-cidata.iso,device=cdrom
-            --network bridge=virbr0,model=virtio
+            --network bridge={{ item.value.pnetwork }},model=virtio
             --graphics spice
             --noautoconsole --os-variant {{ item.value.os_type }}
   args:
     chdir: '{{ vm_location }}/{{ item.key }}/'
   when: item.key not in vms.list_vms
   with_dict: "{{ guests }}"
-
+  become: true
+  become_user: root
 
 - name: start vm
   virt:
     name: "{{ item.key }}"
     state: running
+  with_dict: "{{ guests }}"
+
+- name: Wait for port 22 to be ready
+  wait_for:
+    host: "{{ item.value.address }}"
+    state: started
+    delay: 10
+    connect_timeout: 5
+    timeout: 300
+    port: 22
+  delegate_to: 127.0.0.1
+  become: false
+  ignore_errors: true
   with_dict: "{{ guests }}"

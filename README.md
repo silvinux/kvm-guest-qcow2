@@ -39,7 +39,7 @@ Role Variables
           cpus: 1
           os_type: rhel7
           file_type: qcow2
-          network: "bridge=virbr0"
+          pnetwork: "virbr0"
           model: virtio
           graphics: spice
           address: 192.168.122.12
@@ -93,7 +93,7 @@ Example Playbook
              cpus: 1
              os_type: rhel7
              file_type: qcow2
-             network: "bridge=virbr0"
+             pnetwork: "virbr0"
              model: virtio
              graphics: spice
              address: 192.168.122.13

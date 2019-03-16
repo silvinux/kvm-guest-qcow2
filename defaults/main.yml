@@ -2,7 +2,7 @@
 vm_location: "/var/lib/libvirt/images"
 path_output: "/var/log/cloud-init.log"
 image: "/home/silvinux/kvm/rhel-server-7.6-x86_64-kvm.qcow2"
-new_image_size: "40G"
+new_image_size: "10G"
 
 dir_owner: silvinux
 dir_group: silvinux
@@ -41,28 +41,33 @@ packages:
  - bind-utils
 
 final_message: "The system is finally up, after $UPTIME seconds"
-
 #guests:
-#  client-rhel7:
-#    fqdn: client-rhel7.example.com
-#    mem: 512
+#  test1:
+#    fqdn: test.lab.example.com
+#    mem: 2048
 #    cpus: 1
 #    os_type: rhel7
 #    file_type: qcow2
-#    network: "bridge=virbr0"
+#    pnetwork: "virbr0"
 #    model: virtio
 #    graphics: spice
-#    address: 192.168.122.10
+#    address: 192.168.122.13
 #    network: 192.168.122.0
 #    netmask: 255.255.255.0
 #    broadcast: 192.168.122.255
 #    gateway: 192.168.122.1
-#  test2:
-#    fqdn: test2.example.com
-#    mem: 512
+#
+#  test1:
+#    fqdn: test1.lab.example.com
+#    mem: 2048
 #    cpus: 1
 #    os_type: rhel7
 #    file_type: qcow2
-#    network: "bridge=virbr0"
+#    network: "virbr0"
 #    model: virtio
 #    graphics: spice
+#    address: 192.168.122.113
+#    network: 192.168.122.0
+#    pnetmask: 255.255.255.0
+#    broadcast: 192.168.122.255
+#    gateway: 192.168.122.1
